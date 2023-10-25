@@ -1,132 +1,131 @@
 {
-  "definition": {
-    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
-    "actions": {
-      "HTTP": {
-        "type": "Http",
-        "inputs": {
-          "uri": "https://graph.microsoft.com/v1.0/users",
-          "method": "GET",
-          "authentication": {
-            "type": "ManagedServiceIdentity",
-            "audience": "https://graph.microsoft.com"
-          }
-        },
-        "runAfter": {},
-        "runtimeConfiguration": {
-          "contentTransfer": {
-            "transferMode": "Chunked"
-          }
-        }
-      },
-      "Parse_JSON": {
-        "type": "ParseJson",
-        "inputs": {
-          "content": "@body('HTTP')",
-          "schema": {
-            "type": "object",
-            "properties": {
-              "@@odata.context": {
-                "type": "string"
-              },
-              "@@odata.nextLink": {
-                "type": "string"
-              },
-              "value": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "businessPhones": {
-                      "type": "array"
-                    },
-                    "displayName": {
-                      "type": "string"
-                    },
-                    "givenName": {},
-                    "jobTitle": {},
-                    "mail": {},
-                    "mobilePhone": {},
-                    "officeLocation": {},
-                    "preferredLanguage": {},
-                    "surname": {},
-                    "userPrincipalName": {
-                      "type": "string"
-                    },
-                    "id": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "businessPhones",
-                    "displayName",
-                    "mobilePhone",
-                    "officeLocation",
-                    "userPrincipalName",
-                    "id"
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "runAfter": {
-          "HTTP": [
-            "SUCCEEDED"
-          ]
-        }
-      },
-      "For_each": {
-        "type": "Foreach",
-        "foreach": "@body('Parse_JSON')?['value']",
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
         "actions": {
-          "Compose": {
-            "type": "Compose",
-            "inputs": "@item()?['userPrincipalName']"
-          },
-          "HTTP_1": {
-            "type": "Http",
-            "inputs": {
-              "uri": "https://graph.microsoft.com/v1.0/users/@{outputs('Compose')}/authentication/microsoftAuthenticatorMethods",
-              "method": "GET",
-              "authentication": {
-                "type": "ManagedServiceIdentity",
-                "audience": "https://graph.microsoft.com"
-              }
+            "For_each": {
+                "actions": {
+                    "Compose": {
+                        "inputs": "@item()?['userPrincipalName']",
+                        "type": "Compose"
+                    },
+                    "HTTP_1": {
+                        "inputs": {
+                            "authentication": {
+                                "audience": "https://graph.microsoft.com",
+                                "type": "ManagedServiceIdentity"
+                            },
+                            "method": "GET",
+                            "uri": "https://graph.microsoft.com/v1.0/users/@{outputs('Compose')}/authentication/microsoftAuthenticatorMethods"
+                        },
+                        "runAfter": {
+                            "Compose": [
+                                "SUCCEEDED"
+                            ]
+                        },
+                        "runtimeConfiguration": {
+                            "contentTransfer": {
+                                "transferMode": "Chunked"
+                            }
+                        },
+                        "type": "Http"
+                    }
+                },
+                "foreach": "@body('Parse_JSON')?['value']",
+                "runAfter": {
+                    "Parse_JSON": [
+                        "SUCCEEDED"
+                    ]
+                },
+                "type": "Foreach"
             },
-            "runAfter": {
-              "Compose": [
-                "SUCCEEDED"
-              ]
+            "HTTP": {
+                "inputs": {
+                    "authentication": {
+                        "audience": "https://graph.microsoft.com",
+                        "type": "ManagedServiceIdentity"
+                    },
+                    "method": "GET",
+                    "uri": "https://graph.microsoft.com/v1.0/users"
+                },
+                "runAfter": {},
+                "runtimeConfiguration": {
+                    "contentTransfer": {
+                        "transferMode": "Chunked"
+                    }
+                },
+                "type": "Http"
             },
-            "runtimeConfiguration": {
-              "contentTransfer": {
-                "transferMode": "Chunked"
-              }
+            "Parse_JSON": {
+                "inputs": {
+                    "content": "@body('HTTP')",
+                    "schema": {
+                        "properties": {
+                            "@@odata.context": {
+                                "type": "string"
+                            },
+                            "@@odata.nextLink": {
+                                "type": "string"
+                            },
+                            "value": {
+                                "items": {
+                                    "properties": {
+                                        "businessPhones": {
+                                            "type": "array"
+                                        },
+                                        "displayName": {
+                                            "type": "string"
+                                        },
+                                        "givenName": {},
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "jobTitle": {},
+                                        "mail": {},
+                                        "mobilePhone": {},
+                                        "officeLocation": {},
+                                        "preferredLanguage": {},
+                                        "surname": {},
+                                        "userPrincipalName": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "businessPhones",
+                                        "displayName",
+                                        "mobilePhone",
+                                        "officeLocation",
+                                        "userPrincipalName",
+                                        "id"
+                                    ],
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "runAfter": {
+                    "HTTP": [
+                        "SUCCEEDED"
+                    ]
+                },
+                "type": "ParseJson"
             }
-          }
         },
-        "runAfter": {
-          "Parse_JSON": [
-            "SUCCEEDED"
-          ]
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "triggers": {
+            "Recurrence": {
+                "recurrence": {
+                    "frequency": "Second",
+                    "interval": 3,
+                    "startTime": "2023-10-22",
+                    "timeZone": "Central Standard Time"
+                },
+                "type": "Recurrence"
+            }
         }
-      }
     },
-    "contentVersion": "1.0.0.0",
-    "outputs": {},
-    "triggers": {
-      "Recurrence": {
-        "type": "Recurrence",
-        "recurrence": {
-          "interval": 3,
-          "frequency": "Second",
-          "timeZone": "Central Standard Time",
-          "startTime": "2023-10-22"
-        }
-      }
-    }
-  },
-  "connectionReferences": {},
-  "parameters": {}
+    "kind": "Stateful"
 }
