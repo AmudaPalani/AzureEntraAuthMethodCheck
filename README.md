@@ -1,2 +1,2 @@
 # AzureEntraAuthMethodCheck
-Check for authenticator app version used by each user
+Check for authenticator app version used by each user for FedRamp compliance
